@@ -1,0 +1,225 @@
+import sys
+from math import sin, cos, degrees, pi, floor
+import pygame
+import pygame.gfxdraw
+import constants as c
+from spritesheet import SpriteSheet
+
+game_map = (
+    (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1),
+    (1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1),
+    (1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1),
+    (1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1),
+    (1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1),
+    (1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1)
+)
+
+class Minimap():
+
+    def __init__(self):
+        self.surface = pygame.Surface((c.MAP_WIDTH + 400, c.MAP_HEIGHT))
+        
+    
+    def draw(self):
+        self.surface.fill(c.WHITE)
+        for i, row in enumerate(game_map):
+            for j, elem in enumerate(row):
+                if elem:
+                    pygame.draw.rect(self.surface, c.BLACK, [j*c.SQUARE_SIZE, i*c.SQUARE_SIZE, c.SQUARE_SIZE , c.SQUARE_SIZE], 0)
+
+class Player():
+
+    def __init__(self, x=100, y=100):
+        self.x = x
+        self.y = y
+        self.angle = 1
+        self.speed = 1
+    
+    def draw(self, surface):
+        pygame.gfxdraw.filled_circle(surface, int(self.x), int(self.y), 5, c.RED)
+        pygame.gfxdraw.aacircle(surface, int(self.x), int(self.y), 5, c.RED)
+        pygame.draw.aaline(surface, c.RED, (self.x, self.y), (self.x + 50*cos(self.angle), self.y+ 50*sin(self.angle)))
+
+    def move(self):
+        key = pygame.key.get_pressed()
+
+        off_x = 5 if cos(self.angle) > 0 else -5
+        off_y = 5 if sin(self.angle) > 0 else -5
+        if key[pygame.K_w]:
+            self.x += self.speed * cos(self.angle)
+            self.y += self.speed * sin(self.angle)
+            a, b = int((self.x + off_x) // c.SQUARE_SIZE), int((self.y + off_y)// c.SQUARE_SIZE)
+            if game_map[b][a]:
+                self.x -= self.speed * cos(self.angle)
+                self.y -= self.speed * sin(self.angle) 
+        if key[pygame.K_s]:
+            self.x -= self.speed * cos(self.angle)
+            self.y -= self.speed * sin(self.angle)
+            a, b = int((self.x + off_x) // c.SQUARE_SIZE), int((self.y + off_y)// c.SQUARE_SIZE)
+            if game_map[b][a]:
+                self.x += self.speed * cos(self.angle)
+                self.y += self.speed * sin(self.angle)
+        if key[pygame.K_a]:
+            self.x += self.speed * sin(self.angle)
+            self.y -= self.speed * cos(self.angle)
+            a, b = int((self.x + off_x) // c.SQUARE_SIZE), int((self.y + off_y)// c.SQUARE_SIZE)
+            if game_map[b][a]:
+                self.x -= self.speed * cos(self.angle)
+                self.y += self.speed * sin(self.angle)
+        if key[pygame.K_d]:
+            self.x -= self.speed * sin(self.angle)
+            self.y += self.speed * cos(self.angle)
+            a, b = int((self.x + off_x) // c.SQUARE_SIZE), int((self.y + off_y)// c.SQUARE_SIZE)
+            if game_map[b][a]:
+                self.x += self.x + self.speed * cos(self.angle)
+                self.y -= self.speed * sin(self.angle)
+
+        if self.x < 0: self.x = 0
+        if self.y < 0: self.y = 0
+        if self.x > c.MAP_WIDTH: self.x = c.MAP_WIDTH
+        if self.y > c.MAP_HEIGHT: self.y = c.MAP_HEIGHT
+
+        if key[pygame.K_LEFT]:
+            self.angle -= 0.003
+            if self.angle < -pi: self.angle += 2*pi
+        if key[pygame.K_RIGHT]:
+            self.angle += 0.003
+            if self.angle > pi: self.angle -= 2*pi
+
+        #print(self.angle)
+
+def mapping(a, b):
+    return (a // c.SQUARE_SIZE) * c.SQUARE_SIZE, (b // c.SQUARE_SIZE) * c.SQUARE_SIZE
+
+def calc_distance(x1, y1, x2, y2):
+        return ((x1 - x2)**2 + (y1 - y2)**2)**(0.5)
+
+def rays(player_angle, xp, yp):
+    ray_angle = player_angle - c.HALF_FOV
+    #ray_angle = player_angle
+    ox, oy = xp, yp
+    xm, ym = mapping(ox, oy)
+    
+    pygame.draw.rect(mini_map.surface, c.BLUE, (400, 0, 400, 200))
+    pygame.draw.rect(mini_map.surface, c.GRAY, (400, 200, 400, 200))
+    
+    
+    #for ray in range(0, 1):
+    for ray in range(0, c.NUM_RAYS):
+        
+        sin_a = sin(ray_angle)
+        cos_a = cos(ray_angle)
+        testx, testy = -1000, -1000
+        # verticals
+        x, dx = (xm + c.SQUARE_SIZE, 1) if cos_a >= 0 else (xm, -1)
+        for i in range(0, c.MAP_WIDTH // c.SQUARE_SIZE):
+            
+            depth_v = (x - ox) / cos_a
+            y = oy + depth_v * sin_a
+            a, b = (x + dx) // 25, y // 25
+            #print("{} - {}".format(a, b))
+            if a > 15 or b > 15 or a < 0 or b < 0:
+                break
+            if game_map[int(b)][int(a)]:
+                testx = int(x)
+                testy = int(y)
+                break
+            x += dx * c.SQUARE_SIZE
+
+        # horizontals
+        y, dy = (ym + c.SQUARE_SIZE, 1) if sin_a >= 0 else (ym, -1)
+        for i in range(0, c.MAP_HEIGHT // c.SQUARE_SIZE + 1):
+            depth_h = (y - oy) / sin_a
+            x = ox + depth_h * cos_a
+            a, b = (x // 25), (y + dy) // 25
+            #print("{} - {}".format(a, b))
+            if a > 15 or b > 15 or a < 0 or b < 0:
+                #print("Cagou horizontal {} - {}".format(a, b))
+                break
+            if game_map[int(b)][int(a)]:
+                as1 = calc_distance(ox, oy, testx, testy)
+                as2 = calc_distance(ox, oy, x, y)
+                #print("calc: {}  Calc2: {}".format(as1, as2))
+                if as1 >= as2:
+                    #print("in")
+                    if x>=0 and y>=0 and x<c.MAP_WIDTH and y<c.MAP_HEIGHT:
+                        
+                        testx = int(x)
+                        testy = int(y)
+                break
+            y += dy * c.SQUARE_SIZE
+
+        #print("Ray angle: {} - depth_v: {}  depth_h: {} X: {} Y: {}".format(degrees(ray_angle), depth_v, depth_h, testx, testy))
+
+
+
+        # projection
+        depth = depth_v if depth_v < depth_h else depth_h
+        depth *= cos(player_angle - ray_angle)
+        proj_height = (c.PROJ_COEFF / depth )*2
+        c_scale = 255 / (1 + depth * depth * 0.00002)
+        color = (c_scale, c_scale // 2, c_scale // 3)
+        #pygame.draw.rect(mini_map.surface, color, ((ray * c.SCALE) + 400, c.MAP_HEIGHT // 2 - proj_height // 2, c.SCALE, proj_height))
+        ray_angle += c.DELTA_ANGLE
+        pygame.draw.aaline(mini_map.surface, c.GREEN, (player.x, player.y), (testx, testy))
+
+        wall_x = 1.1
+        wall_x = testy if depth_v < depth_h else testx
+        
+        wall_x -= (wall_x // 25)*25
+        #print(wall_x)
+        proj_height = proj_height * 2
+        tex_x = (wall_x/25)*64
+        tex_x = floor(tex_x)
+        #print(tex_x)
+        image = sprite.get_image(tex_x, 0, 10, 64 )
+        image = pygame.transform.scale(image,(int(3000/proj_height), int(proj_height)))
+        mini_map.surface.blit(image, ((ray * c.SCALE) + 400, c.MAP_HEIGHT // 2 - proj_height // 2))
+
+    print("end")
+
+        
+
+
+
+pygame.init()
+screen = pygame.display.set_mode((800, 400))
+mini_map = Minimap()
+sprite = SpriteSheet("assets/greystone.png")
+
+
+clock = pygame.time.Clock()
+player = Player()
+
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+    screen.fill(c.BLACK)
+    
+    mini_map.draw()
+    player.draw(mini_map.surface)
+    rays(player.angle, player.x, player.y)
+    player.move()
+    screen.blit(mini_map.surface, (0,0))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:  
+            pygame.quit()
+            sys.exit()
+    
+    mouse_pos = pygame.mouse.get_pos()
+    #sprint("X: {} Y: {}".format(mouse_pos[0], mouse_pos[1]))
+
+    pygame.display.flip()
+    clock.tick(120)

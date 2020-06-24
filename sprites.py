@@ -7,6 +7,9 @@ class Sprites():
         self.speed = 0.3
         self.dir_x = dir_x
         self.dir_y = dir_y
+        self.uDiv = 0
+        self.vDiv = 0
+        self.is_player = False
     
     def move(self):
         self.x +=  self.dir_x*self.speed

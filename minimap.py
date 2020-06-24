@@ -9,7 +9,7 @@ class Minimap:
         self.x = c.SCREEN_WIDTH - self.square_size*c.MAP_WIDTH
         self.y = 0
     
-    def draw(self, destination, world_map, player_x, player_y, sprites):
+    def draw(self, destination, world_map, player_x, player_y, dict_sprites):
         self.surface.fill(c.GRAY)
         for i, row in enumerate(world_map):
             for j, elem in enumerate(row):
@@ -20,8 +20,9 @@ class Minimap:
         dot_y = (player_y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
         pygame.draw.circle(self.surface, c.BLUE, (int(dot_y), int(dot_x)), self.square_size//2)
         # Draw Sprites
-        for sprite in sprites:
-            dot_x = (sprite.x / c.MAP_WIDTH) * self.square_size*c.MAP_WIDTH
-            dot_y = (sprite.y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
-            pygame.draw.circle(self.surface, c.RED, (int(dot_y), int(dot_x)), self.square_size//2)
+        for key, value in dict_sprites.items():
+            for sprite in value:
+                dot_x = (sprite.x / c.MAP_WIDTH) * self.square_size*c.MAP_WIDTH
+                dot_y = (sprite.y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
+                pygame.draw.circle(self.surface, c.RED, (int(dot_y), int(dot_x)), self.square_size//2)
         destination.blit(self.surface, (self.x, self.y))

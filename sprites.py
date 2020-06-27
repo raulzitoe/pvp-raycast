@@ -1,15 +1,18 @@
 class Sprites():
 
-    def __init__(self, x, y, dir_x, dir_y, image):
+    def __init__(self, x, y, dir_x, dir_y, image, speed, is_player=False, uDiv=0, vDiv=0, name="Player"):
         self.x = x
         self.y = y
         self.image = image
-        self.speed = 0.3
+        self.speed = speed
         self.dir_x = dir_x
         self.dir_y = dir_y
-        self.uDiv = 0
-        self.vDiv = 0
-        self.is_player = False
+        self.uDiv = uDiv
+        self.vDiv = vDiv
+        self.is_player = is_player
+        self.kills = 0
+        self.deaths = 0
+        self.name = name
     
     def move(self):
         self.x +=  self.dir_x*self.speed

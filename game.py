@@ -5,6 +5,7 @@ from sprites import Sprites
 from minimap import Minimap
 import constants as c
 import pickle
+from scoreboard import Scoreboard
 
 
 class Game:
@@ -20,7 +21,7 @@ class Game:
         self.planeX = 0.0
         self.planeY = 0.66
         self.textures = []
-        self.sprites = []
+        self.sprites = {}
         # Generate some textures
         self.textures.append(SpriteSheet("assets/eagle.png")) #1
         self.textures.append(SpriteSheet("assets/redbrick.png")) #2
@@ -31,21 +32,26 @@ class Game:
         self.textures.append(SpriteSheet("assets/wood.png")) #7
         self.textures.append(SpriteSheet("assets/colorstone.png")) #8
 
-        self.projectile_image = pygame.image.load("assets/projectile.png").convert_alpha()
-        self.player_image = pygame.image.load("assets/player.png").convert_alpha()
+        self.projectile_image = SpriteSheet("assets/projectile.png")
+        self.player_image = SpriteSheet("assets/player.png")
         self.floor_img = pygame.image.load("assets/floor.png").convert()
         self.minimap = Minimap(5)
         self.font = pygame.font.Font('freesansbold.ttf', 10)
         self.time = 0 # time of current frame
         self.oldTime = 0 #time of previous frame
         self.frameTime = 0.0
-        self.players = {}
-        self.sprites.append(Sprites(1.5, 1.5, 0, 0, self.player_image))
         self.my_id = -1
         self.shoot = False
         self.is_connected = False
         self.done = False
         self.game_map = c.game_map
+        self.show_scoreboard = False
+        self.scoreboard = Scoreboard()
+        self.message = ""
+        self.old_message_time = 0
+        self.message_time = 0
+        self.scoreboard_data = {}
+        self.zBuffer = []
 
     def input_handle(self):
         events = pygame.event.get()
@@ -77,8 +83,10 @@ class Game:
             self.planeX = self.planeX * cos(-pi/2) - self.planeY * sin(-pi/2)
             self.planeY = oldPlaneX * sin(-pi/2) + self.planeY * cos(-pi/2)
 
-            self.posX += self.dirX * (moveSpeed/2)
-            self.posY += self.dirY * (moveSpeed/2)
+            if(self.game_map[int(self.posX + self.dirX * moveSpeed)][int(self.posY)] == False):
+                self.posX += self.dirX * (moveSpeed/2)
+            if(self.game_map[int(self.posX)][int(self.posY + self.dirY * moveSpeed)] == False):
+                self.posY += self.dirY * (moveSpeed/2)
 
             oldDirX = self.dirX
             self.dirX = self.dirX * cos(pi/2) - self.dirY * sin(pi/2)
@@ -95,8 +103,10 @@ class Game:
             self.planeX = self.planeX * cos(-pi/2) - self.planeY * sin(-pi/2)
             self.planeY = oldPlaneX * sin(-pi/2) + self.planeY * cos(-pi/2)
 
-            self.posX -= self.dirX * (moveSpeed/2)
-            self.posY -= self.dirY * (moveSpeed/2)
+            if(self.game_map[int(self.posX - self.dirX * moveSpeed)][int(self.posY)] == False):
+                self.posX -= self.dirX * moveSpeed
+            if(self.game_map[int(self.posX)][int(self.posY - self.dirY * moveSpeed)] == False):
+                self.posY -= self.dirY * moveSpeed
 
             oldDirX = self.dirX
             self.dirX = self.dirX * cos(pi/2) - self.dirY * sin(pi/2)
@@ -137,21 +147,35 @@ class Game:
         if key[pygame.K_ESCAPE]:
             self.done = True
             pygame.quit()
+
+        self.show_scoreboard = False
+        if key[pygame.K_TAB]:
+            self.show_scoreboard = True
+        
+        (movement_x, movement_y) = pygame.mouse.get_rel()
+        if movement_x:
+            rotSpeed *= (-movement_x/25)
+            oldDirX = self.dirX
+            self.dirX = self.dirX * cos(rotSpeed) - self.dirY * sin(rotSpeed)
+            self.dirY = oldDirX * sin(rotSpeed) + self.dirY * cos(rotSpeed)
+            oldPlaneX = self.planeX
+            self.planeX = self.planeX * cos(rotSpeed) - self.planeY * sin(rotSpeed)
+            self.planeY = oldPlaneX * sin(rotSpeed) + self.planeY * cos(rotSpeed)
+
+
+        
     
 
-    def cast_sprites(self, data_sprites, screen):
+    def cast_sprites(self, dict_sprites, screen):
         # SPRITE CASTING
         # TODO: Sort sprites from far to close
-        #if type(data_sprites) is dict:
+
         sprites = []
-        for key, value in data_sprites.items():
-            # If it`s a list it means we are dealing with sprites list, not players
-            if type(value) is list:
-                for sprite in value:
+        # Check for you own sprite so you dont cast your player
+        for player_id, sprites_list in dict_sprites.items():
+            for sprite in sprites_list:
+                if not (int(player_id) == self.my_id and sprite.is_player):
                     sprites.append(sprite)
-            else:
-                if not (int(key) == self.my_id and value.is_player):
-                    sprites.append(value)
 
         # After sorting the sprites, do the projection and draw them
         for sprite in sprites:
@@ -199,24 +223,30 @@ class Game:
             drawEndX = spriteWidth / 2 + spriteScreenX
             if drawEndX >= c.SCREEN_WIDTH:
                 drawEndX = c.SCREEN_WIDTH - 1
-            if transformY > 0 and drawStartX >= 0 and drawEndX < c.SCREEN_WIDTH:
-                if spriteWidth > 9000:
-                    spriteWidth = 9000
-                if spriteHeight > 9000:
-                    spriteHeight = 9000
-                tmp_image = pygame.transform.scale(sprite.image, (int(spriteWidth), int(spriteHeight)))
-                # Darken sprites that are far from the player
-                darken_percent = (1 - (spriteHeight*30/c.SCREEN_HEIGHT))
-                dark = pygame.Surface(tmp_image.get_size(), pygame.SRCALPHA).convert_alpha()
-                darkness = (darken_percent*255)
-                if darkness > 255:
-                    darkness = 255
-                elif darkness < 0:
-                    darkness = 0
-                dark.blit(tmp_image, (0 , 0))
-                dark.fill((darkness, darkness, darkness, 0), None, pygame.BLEND_RGBA_SUB)
-                #print("drawx: {} drawy: {}".format(drawStartX, drawStartY))
-                screen.blit(dark, (drawStartX , drawStartY))
+
+            # Get sprite image size
+            image_width = sprite.image.get_width()
+            image_height = sprite.image.get_height()
+            for stripe in range(int(drawStartX), int(drawEndX)):
+                texX = int(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * image_width / spriteWidth) / 256
+                if transformY > 0 and drawStartX >= 0 and drawEndX < c.SCREEN_WIDTH and transformY < self.zBuffer[stripe]:
+                    tmp_image1 = sprite.image.get_image(int(round(texX)), 0, 1, image_height)
+                    tmp_image = pygame.transform.scale(tmp_image1, (1, int(spriteHeight)))
+
+                    # Darken sprites that are far from the player
+                    darken_percent = (1 - (spriteHeight*30/c.SCREEN_HEIGHT))
+                    dark = pygame.Surface(tmp_image.get_size(), pygame.SRCALPHA).convert_alpha()
+                    darkness = (darken_percent*255)
+                    if darkness > 255:
+                        darkness = 255
+                    elif darkness < 0:
+                        darkness = 0
+                    dark.blit(tmp_image, (0 , 0))
+                    #dark.fill((darkness, darkness, darkness, 0), None, pygame.BLEND_RGBA_SUB)
+                    #print("drawx: {} drawy: {}".format(drawStartX, drawStartY))
+                    screen.blit(dark, (stripe , drawStartY))
+            
+            
             if not self.is_connected:
                 sprite.move()
                 if self.game_map[int(sprite.x)][int(sprite.y)]:
@@ -230,6 +260,7 @@ class Game:
             self.floor_img.convert()
         screen.blit(self.floor_img, (0, c.SCREEN_HEIGHT//2, c.SCREEN_WIDTH, c.SCREEN_HEIGHT//2))
 
+        self.zBuffer = []
         for x in range(0, c.SCREEN_WIDTH):
 
             # Calculate ray position and direction
@@ -347,10 +378,12 @@ class Game:
 
             screen.blit(image2, ((x * 1), c.SCREEN_HEIGHT // 2 - lineHeight // 2))
             screen.blit(dark, ((x * 1), c.SCREEN_HEIGHT // 2 - lineHeight // 2))
+            
+            # SET THE ZBUFFER FOR THE SPRITE CASTING
+            self.zBuffer.append(perpWallDist)
 
         # Cast Sprites and Players:
         self.cast_sprites(self.sprites, screen)
-        self.cast_sprites(self.players, screen)
         
 
         # Draw Minimap
@@ -363,5 +396,21 @@ class Game:
         fps = 1.0 / self.frameTime
         text = self.font.render("FPS: {:.2f}".format(fps), True, c.WHITE)
         screen.blit(text, (10, 10))
+
+        # Draw Scoreboard
+        if self.show_scoreboard:
+            self.scoreboard.draw(screen, self.sprites, self.scoreboard_data)
+
+        # Draw server message and empty the variable after some time
+        
+        if self.message:
+            self.message_time = pygame.time.get_ticks()
+            if self.message_time - self.old_message_time > 5000:
+                self.old_message_time = self.message_time
+                self.message = ""
+        if not self.message:
+            self.old_message_time = pygame.time.get_ticks()
+        text = self.font.render(self.message, True, c.WHITE)
+        screen.blit(text, (c.SCREEN_WIDTH//2, 10))
 
     

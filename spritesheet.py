@@ -8,7 +8,7 @@ class SpriteSheet(object):
         """ Constructor. Pass in the file name of the sprite sheet. """
  
         # Load the sprite sheet.
-        self.sprite_sheet = pygame.image.load(file_name).convert()
+        self.sprite_sheet = pygame.image.load(file_name).convert_alpha()
  
  
     def get_image(self, x, y, width, height):
@@ -17,13 +17,19 @@ class SpriteSheet(object):
             and the width and height of the sprite. """
  
         # Create a new blank image
-        image = pygame.Surface([width, height]).convert()
+        image = pygame.Surface([width, height], pygame.SRCALPHA).convert_alpha()
  
         # Copy the sprite from the large sheet onto the smaller image
         image.blit(self.sprite_sheet, (0, 0), (x, y, width, height))
  
         # Assuming black works as the transparent color
-        image.set_colorkey(c.BLACK)
+        #image.set_colorkey(c.BLACK)
  
         # Return the image
         return image
+    
+    def get_width(self):
+        return self.sprite_sheet.get_width()
+
+    def get_height(self):
+        return self.sprite_sheet.get_height()

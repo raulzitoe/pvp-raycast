@@ -20,9 +20,10 @@ class Minimap:
         dot_y = (player_y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
         pygame.draw.circle(self.surface, c.BLUE, (int(dot_y), int(dot_x)), self.square_size//2)
         # Draw Sprites
-        for key, value in dict_sprites.items():
-            for sprite in value:
-                dot_x = (sprite.x / c.MAP_WIDTH) * self.square_size*c.MAP_WIDTH
-                dot_y = (sprite.y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
-                pygame.draw.circle(self.surface, c.RED, (int(dot_y), int(dot_x)), self.square_size//2)
+        for player_id, sprites_list in dict_sprites.items():
+            for sprite in sprites_list:
+                if not sprite.is_player:
+                    dot_x = (sprite.x / c.MAP_WIDTH) * self.square_size*c.MAP_WIDTH
+                    dot_y = (sprite.y / c.MAP_HEIGHT) * self.square_size*c.MAP_HEIGHT
+                    pygame.draw.circle(self.surface, c.RED, (int(dot_y), int(dot_x)), self.square_size//2)
         destination.blit(self.surface, (self.x, self.y))

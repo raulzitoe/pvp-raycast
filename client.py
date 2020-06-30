@@ -4,18 +4,22 @@ import constants as c
 import socket
 import time
 import pickle
-#from player import Player
-from sprites import Sprites
+from sprite import Sprite
 import threading
 import sys
 
 
 def network_data_handle():
+    """ The method handles the in/out data when playing over a network or internet
+
+        It is used as a thread to decouple the pygame loop from the data handling 
+        so the conection won't affect the fps of the game
+    """    
     global client, game
     while not game.done:
         try:
             data = client.recv(2048)
-            #print(sys.getsizeof(data))
+            print(sys.getsizeof(data))
             sprites_dict_data, death_info, message, scoreboard_data = pickle.loads(data)
             if message:
                 game.message = message
@@ -37,7 +41,7 @@ def network_data_handle():
             projectile_data = 0
             if game.shoot:
                 game.shoot = False
-                projectile_data = Sprites(game.posX, game.posY, game.dirX, game.dirY, 0, 0.2)
+                projectile_data = Sprite(game.posX, game.posY, game.dirX, game.dirY, 0, 0.2)
             send_data = pickle.dumps((game.posX, game.posY, projectile_data))
             client.send(send_data)
         except Exception as e:
@@ -50,10 +54,12 @@ screen = pygame.display.set_mode((c.SCREEN_WIDTH, c.SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 game = Game()
 
+# Hide mouse pointer and set grab as True
+# This enables pygame relative virtual mouse movement used on mouse input camera movement
 pygame.mouse.set_visible(False)
 pygame.event.set_grab(True)
 
-
+# Read txt config file to check if game is local or over network/internet
 f = open("ip_port_to_connect.txt", "r")
 CONDITION, PLAYER_NAME, IP, PORT = f.read().splitlines()
 print("1: {} 2: {} 3: {} 4: {}".format(CONDITION, PLAYER_NAME, IP, PORT))
@@ -63,6 +69,7 @@ print("Connected? {}".format(game.is_connected))
 PORT = int(PORT)
 f.close()
 
+# Case connected, create conection with server, send name and receive client ID 
 if game.is_connected:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     addr = (IP, PORT)

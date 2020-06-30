@@ -1,8 +1,11 @@
 import pygame
 import constants as c
 
-class Minimap:
 
+class Minimap:
+    """
+    Class to hold the minimap info and draw it into a surface
+    """
     def __init__(self, square_size):
         self.square_size = square_size
         self.surface = pygame.Surface((self.square_size*c.MAP_WIDTH, self.square_size*c.MAP_HEIGHT)).convert()
@@ -10,6 +13,19 @@ class Minimap:
         self.y = 0
     
     def draw(self, destination, world_map, player_x, player_y, dict_sprites):
+        """
+        Draws the minimap into a surface
+
+        Args:
+            destination (surface): pygame surface to draw the minimap on
+            world_map (tuple): variable that holds the level information
+            player_x (float): the player x position in the game
+            player_y (float): the player y position in the game
+            dict_sprites (dict): dictionary of sprites to show on the minimap
+        Returns:
+            None
+            
+        """
         self.surface.fill(c.GRAY)
         for i, row in enumerate(world_map):
             for j, elem in enumerate(row):

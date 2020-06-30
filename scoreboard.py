@@ -11,6 +11,13 @@ class Scoreboard:
         self.font = pygame.font.Font('freesansbold.ttf', 16)
 
     def draw(self, screen, sprites_dict, scoreboard_data):
+        """ Method to draw the socreboard on a surface
+
+        Args:
+            screen (surface): The surface to draw the scoreboard on
+            sprites_dict (dict): Dictionary conatining player and projectiles info
+            scoreboard_data (dict): dictionary contaning kill and death info
+        """        
         pygame.draw.rect(self.surface, (0, 0, 0, 127), (0, 0, self.width, self.height))
         pygame.draw.rect(self.surface, (168, 111, 50, 255), (0, 0, self.width, self.height), 1)
         text = self.font.render("Name", True, c.WHITE)
@@ -31,7 +38,4 @@ class Scoreboard:
                     text = self.font.render("{}".format(scoreboard_data[key][1]), True, c.WHITE)
                     self.surface.blit(text, (x + 300, y))
                     y += 30
-
-
-
         screen.blit(self.surface, (c.SCREEN_WIDTH//2 - self.width//2, 100))

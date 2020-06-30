@@ -4,8 +4,7 @@ import pickle
 import time
 import random
 import constants as c
-#from player import Player
-from sprites import Sprites
+from sprite import Sprite
 from collections import defaultdict
 
 def spawn_random():
@@ -15,7 +14,7 @@ def spawn_random():
     while c.game_map[y][x] != 0:
         x = random.randint(0, c.MAP_WIDTH-1)
         y = random.randint(0, c.MAP_HEIGHT-1)
-    return x, y
+    return 3.0, 10.0
 
 def calculate_distance(a, b):
         return ((a.x - b.x)**2 + (a.y - b.y)**2)**(0.5)
@@ -49,7 +48,7 @@ def threaded_client(conn, _id):
 
     # Send id to client and create a new player instance with that id
     conn.send(str.encode(str(current_id)))
-    sprites_dict[current_id].append(Sprites(1, 1, 1, 1, None, 0, True, 1, 1, name))
+    sprites_dict[current_id].append(Sprite(1, 1, 1, 1, None, 0, True, 2, 1, 0, name))
     message[current_id] = ""
     scoreboard[current_id] = [0, 0]
     for key in message.keys():
@@ -117,8 +116,6 @@ def threaded_client(conn, _id):
     del sprites_dict[current_id]  # remove client information from players list
     conn.close()  # close connection
 
-
-
 # Setup sockets
 S = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 S.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -129,7 +126,7 @@ PORT = 5000
 HOST_NAME = socket.gethostname()
 SERVER_IP = socket.gethostbyname(HOST_NAME)
 
-# try to connect to server
+# Try to connect to server
 try:
     S.bind((SERVER_IP, PORT))
 except socket.error as e:
@@ -142,7 +139,6 @@ S.listen()  # Listen for connections
 print("[SERVER] Server Started with local ip {} on port {}".format(SERVER_IP, PORT))
 
 # Dynamic variables
-#players = {}
 sprites_dict = defaultdict(list)
 connections = 0
 _id = 0
@@ -163,7 +159,3 @@ while True:
     _id += 1
 
 print("[SERVER] Server offline")
-
-
-
-

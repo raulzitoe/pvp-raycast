@@ -1,15 +1,16 @@
 import pygame
+import pickle
 from math import floor, sin, cos, pi
 from spritesheet import SpriteSheet
-from sprites import Sprites
+from sprite import Sprite
 from minimap import Minimap
-import constants as c
-import pickle
 from scoreboard import Scoreboard
+import constants as c
 
 
 class Game:
-    
+    """ Class that holds game info, handles user inputs and draws every game component on the screen """    
+
     def __init__(self):
         # X and Y start position
         self.posX = 3.0
@@ -22,7 +23,7 @@ class Game:
         self.planeY = 0.66
         self.textures = []
         self.sprites = {}
-        # Generate some textures
+        # Load some textures and sprites into Spritesheet instances
         self.textures.append(SpriteSheet("assets/eagle.png")) #1
         self.textures.append(SpriteSheet("assets/redbrick.png")) #2
         self.textures.append(SpriteSheet("assets/purplestone.png")) #3
@@ -31,12 +32,14 @@ class Game:
         self.textures.append(SpriteSheet("assets/mossy.png")) #6
         self.textures.append(SpriteSheet("assets/wood.png")) #7
         self.textures.append(SpriteSheet("assets/colorstone.png")) #8
-
         self.projectile_image = SpriteSheet("assets/projectile.png")
         self.player_image = SpriteSheet("assets/player.png")
+        # Load static floor image
         self.floor_img = pygame.image.load("assets/floor.png").convert()
+        
         self.minimap = Minimap(5)
         self.font = pygame.font.Font('freesansbold.ttf', 10)
+        self.font_large = pygame.font.Font('freesansbold.ttf', 26)
         self.time = 0 # time of current frame
         self.oldTime = 0 #time of previous frame
         self.frameTime = 0.0
@@ -54,6 +57,7 @@ class Game:
         self.zBuffer = []
 
     def input_handle(self):
+        """ Handles user keyboard and mouse inputs """        
         events = pygame.event.get()
 
         # speed modifiers
@@ -139,7 +143,8 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if key[pygame.K_SPACE]:
                     self.shoot = True
-                    #self.sprites.append(Sprites(self.posX, self.posY, self.dirX, self.dirY, self.projectile_image))
+                    if not self.is_connected:
+                        self.sprites[self.my_id].append(Sprite(self.posX, self.posY, self.dirX, self.dirY, 0, 0.2))
             if event.type == pygame.QUIT:
                 self.done = True  
                 pygame.quit()
@@ -162,13 +167,13 @@ class Game:
             self.planeX = self.planeX * cos(rotSpeed) - self.planeY * sin(rotSpeed)
             self.planeY = oldPlaneX * sin(rotSpeed) + self.planeY * cos(rotSpeed)
 
-
-        
-    
-
     def cast_sprites(self, dict_sprites, screen):
-        # SPRITE CASTING
-        # TODO: Sort sprites from far to close
+        """ Cast sprites into a surface
+
+        Args:
+            dict_sprites (dict): dictionary containing all the sprites, including players and projectiles
+            screen (surface): the pygame surface to draw the sprites
+        """        
 
         sprites = []
         # Check for you own sprite so you dont cast your player
@@ -176,6 +181,8 @@ class Game:
             for sprite in sprites_list:
                 if not (int(player_id) == self.my_id and sprite.is_player):
                     sprites.append(sprite)
+        
+        # TODO: Sort sprites from far to close
 
         # After sorting the sprites, do the projection and draw them
         for sprite in sprites:
@@ -198,13 +205,10 @@ class Game:
             spriteScreenX = int((c.SCREEN_WIDTH / 2) * (1 + transformX / transformY))
 
             # Parameters for scaling and moving the sprites
-            uDiv = 10
-            vDiv = 10
-            if sprite.uDiv > 0:
-                uDiv = sprite.uDiv
-            if sprite.vDiv > 0:
-                vDiv = sprite.vDiv
-            vMove = 60.0
+            uDiv = sprite.uDiv
+            vDiv = sprite.vDiv
+            vMove = sprite.vMove
+                
             vMoveScreen = int(vMove / transformY)
 
             # Calculate height of the sprite on screen
@@ -242,9 +246,24 @@ class Game:
                     elif darkness < 0:
                         darkness = 0
                     dark.blit(tmp_image, (0 , 0))
-                    #dark.fill((darkness, darkness, darkness, 0), None, pygame.BLEND_RGBA_SUB)
+                    dark.fill((darkness, darkness, darkness, 0), None, pygame.BLEND_RGBA_SUB)
                     #print("drawx: {} drawy: {}".format(drawStartX, drawStartY))
                     screen.blit(dark, (stripe , drawStartY))
+
+                    middle_stripe = int(drawStartX + (drawEndX - drawStartX)//2)
+                    if stripe ==  middle_stripe and sprite.is_player:
+                        ratio = 4 * (spriteHeight / image_height) 
+                        text_default = self.font_large.render(sprite.name, True, c.GREEN)
+                        scaled_width = int(ratio*text_default.get_width())
+                        scaled_height = int(ratio*text_default.get_height())
+                        text = pygame.transform.scale(text_default, (scaled_width, scaled_height))
+                        screen.blit(text, (middle_stripe  - text.get_width()//2, drawStartY - text.get_height()))
+
+
+            # print("{}  {}  {}".format(drawEndX//2, drawStartY, inside))
+
+                    
+
             
             
             if not self.is_connected:
@@ -253,6 +272,11 @@ class Game:
                     self.sprites.remove(sprite)
 
     def draw(self, screen):
+        """  Draws all the game components
+
+        Args:
+            screen (surface): the surface to draw the game on
+        """        
         pygame.draw.rect(screen, c.BLACK, (0, 0, c.SCREEN_WIDTH, c.SCREEN_HEIGHT//2))
         floor_size = self.floor_img.get_size()
         if floor_size[0] != c.SCREEN_WIDTH or floor_size[1] != c.SCREEN_HEIGHT//2:
@@ -385,7 +409,6 @@ class Game:
         # Cast Sprites and Players:
         self.cast_sprites(self.sprites, screen)
         
-
         # Draw Minimap
         self.minimap.draw(screen, self.game_map, self.posX, self.posY, self.sprites)
 
@@ -411,6 +434,4 @@ class Game:
         if not self.message:
             self.old_message_time = pygame.time.get_ticks()
         text = self.font.render(self.message, True, c.WHITE)
-        screen.blit(text, (c.SCREEN_WIDTH//2, 10))
-
-    
+        screen.blit(text, (c.SCREEN_WIDTH//2, 10))   

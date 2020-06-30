@@ -1,6 +1,8 @@
-class Sprites():
-
-    def __init__(self, x, y, dir_x, dir_y, image, speed, is_player=False, uDiv=0, vDiv=0, name="Player"):
+class Sprite():
+    """
+    Class to hold sprite info, including other players and projectiles
+    """
+    def __init__(self, x, y, dir_x, dir_y, image, speed, is_player=False, uDiv=10, vDiv=10, vMove=60, name="Player"):
         self.x = x
         self.y = y
         self.image = image
@@ -9,6 +11,7 @@ class Sprites():
         self.dir_y = dir_y
         self.uDiv = uDiv
         self.vDiv = vDiv
+        self.vMove = vMove
         self.is_player = is_player
         self.kills = 0
         self.deaths = 0

@@ -5,8 +5,7 @@ import socket
 import time
 import pickle
 from sprite import Sprite
-import threading
-import sys
+import threading 
 
 
 def network_data_handle():
@@ -19,7 +18,6 @@ def network_data_handle():
     while not game.done:
         try:
             data = client.recv(2048)
-            print(sys.getsizeof(data))
             sprites_dict_data, death_info, message, scoreboard_data = pickle.loads(data)
             if message:
                 game.message = message

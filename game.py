@@ -56,6 +56,7 @@ class Game:
         self.message_time = 0
         self.scoreboard_data = {}
         self.zBuffer = []
+        self.show_cursor = False
 
     def input_handle(self):
         """ Handles user keyboard and mouse inputs """        
@@ -154,6 +155,15 @@ class Game:
                     self.shoot = True
                     if not self.is_connected:
                         self.sprites[self.my_id].append(Sprite(self.posX, self.posY, self.dirX, self.dirY, self.projectile_image, 0.4))
+                if event.button == 3:
+                    if not self.show_cursor:
+                        pygame.mouse.set_visible(True)
+                        pygame.event.set_grab(False)
+                        self.show_cursor = True
+                    elif self.show_cursor:
+                        pygame.mouse.set_visible(False)
+                        pygame.event.set_grab(True)
+                        self.show_cursor = False
             
         
         if key[pygame.K_ESCAPE]:
@@ -360,6 +370,8 @@ class Game:
                 perpWallDist = (mapY - self.posY + (1 - stepY) / 2) / rayDirY
 
             # Calculate height of line to draw on screen
+            if perpWallDist == 0:
+                perpWallDist = 0.000001
             lineHeight = int(c.SCREEN_HEIGHT / perpWallDist)
             if lineHeight > 10*c.SCREEN_HEIGHT:
                 lineHeight = 10*c.SCREEN_HEIGHT
@@ -430,6 +442,13 @@ class Game:
         # Draw Scoreboard
         if self.show_scoreboard:
             self.scoreboard.draw(screen, self.sprites, self.scoreboard_data)
+
+        # Draw the crosshair
+        cross_size = 20
+        pygame.draw.line(screen, c.RED, (c.SCREEN_WIDTH//2 - cross_size//2, c.SCREEN_HEIGHT//2 + 20),
+                            (c.SCREEN_WIDTH//2 + cross_size//2, c.SCREEN_HEIGHT//2 + 20))
+        pygame.draw.line(screen, c.RED, (c.SCREEN_WIDTH//2, c.SCREEN_HEIGHT//2 - cross_size//2 + 20),
+                            (c.SCREEN_WIDTH//2, c.SCREEN_HEIGHT//2 + cross_size//2 + 20))
 
         # Draw server message and empty the variable after some time
         

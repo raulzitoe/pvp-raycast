@@ -8,13 +8,12 @@ from sprite import Sprite
 from collections import defaultdict
 
 def spawn_random():
-    print("Respawn")
-    x = random.randint(0, c.MAP_WIDTH-1)
-    y = random.randint(0, c.MAP_HEIGHT-1)
-    while c.game_map[y][x] != 0:
-        x = random.randint(0, c.MAP_WIDTH-1)
-        y = random.randint(0, c.MAP_HEIGHT-1)
-    return 3.0, 10.0
+    x = random.randint(0, c.MAP_WIDTH-1) + 0.5
+    y = random.randint(0, c.MAP_HEIGHT-1) + 0.5
+    while c.game_map[int(x)][int(y)] != 0:
+        x = random.randint(0, c.MAP_WIDTH-1) + 0.5
+        y = random.randint(0, c.MAP_HEIGHT-1) + 0.5
+    return x, y
 
 def calculate_distance(a, b):
         return ((a.x - b.x)**2 + (a.y - b.y)**2)**(0.5)
@@ -141,7 +140,7 @@ print("[SERVER] Server Started with local ip {} on port {}".format(SERVER_IP, PO
 # Dynamic variables
 sprites_dict = defaultdict(list)
 connections = 0
-_id = 0
+_id = 1
 threads = []
 message = {}
 scoreboard = {}

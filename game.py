@@ -44,6 +44,7 @@ class Game:
         self.oldTime = 0 #time of previous frame
         self.frameTime = 0.0
         self.my_id = -1
+        self.sprites[self.my_id] = []
         self.shoot = False
         self.is_connected = False
         self.done = False
@@ -140,14 +141,20 @@ class Game:
             self.planeY = oldPlaneX * sin(rotSpeed) + self.planeY * cos(rotSpeed)
 
         for event in events:
-            if event.type == pygame.KEYDOWN:
-                if key[pygame.K_SPACE]:
-                    self.shoot = True
-                    if not self.is_connected:
-                        self.sprites[self.my_id].append(Sprite(self.posX, self.posY, self.dirX, self.dirY, 0, 0.2))
             if event.type == pygame.QUIT:
                 self.done = True  
                 pygame.quit()
+            elif event.type == pygame.KEYDOWN:
+                if key[pygame.K_SPACE]:
+                    self.shoot = True
+                    if not self.is_connected:
+                        self.sprites[self.my_id].append(Sprite(self.posX, self.posY, self.dirX, self.dirY, self.projectile_image, 0.4))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.shoot = True
+                    if not self.is_connected:
+                        self.sprites[self.my_id].append(Sprite(self.posX, self.posY, self.dirX, self.dirY, self.projectile_image, 0.4))
+            
         
         if key[pygame.K_ESCAPE]:
             self.done = True
@@ -269,7 +276,7 @@ class Game:
             if not self.is_connected:
                 sprite.move()
                 if self.game_map[int(sprite.x)][int(sprite.y)]:
-                    self.sprites.remove(sprite)
+                    self.sprites[self.my_id].remove(sprite)
 
     def draw(self, screen):
         """  Draws all the game components

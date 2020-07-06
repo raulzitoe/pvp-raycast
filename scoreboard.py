@@ -17,7 +17,8 @@ class Scoreboard:
             screen (surface): The surface to draw the scoreboard on
             sprites_dict (dict): Dictionary conatining player and projectiles info
             scoreboard_data (dict): dictionary contaning kill and death info
-        """        
+        """ 
+               
         pygame.draw.rect(self.surface, (0, 0, 0, 127), (0, 0, self.width, self.height))
         pygame.draw.rect(self.surface, (168, 111, 50, 255), (0, 0, self.width, self.height), 1)
         text = self.font.render("Name", True, c.WHITE)

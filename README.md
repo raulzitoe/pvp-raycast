@@ -1,3 +1,3 @@
 # pvp-raycast
 
-![Test](assets/raycast.gif)
+![Test](https://media.giphy.com/media/QArecbV890nIeZq6xA/giphy.gif)
